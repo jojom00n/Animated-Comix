@@ -1,8 +1,8 @@
 class ComixLocation:
-    _x = 0;
-    _y = 0;
+    _x = 0
+    _y = 0
 
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self._y = y
         self._x = x
 
@@ -24,7 +24,7 @@ class ElementTransform:
     _rotation = 0
     _scale = 1
 
-    def __init__(self, zaxis, rotation, scale):
+    def __init__(self, zaxis=0, rotation=0, scale=1):
         self._zaxis = zaxis
         self._rotation = rotation
         self._scale = scale

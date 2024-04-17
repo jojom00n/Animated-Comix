@@ -1,4 +1,5 @@
 from ComixUtils import*
+from ComixAnimation import*
 
 class ComixElement:
     _left = 0
@@ -7,8 +8,14 @@ class ComixElement:
     _bottom = 0
     _transformation = ElementTransform()
     _anchorPoint = ComixLocation()
+    _tag = ""
+    _content = []
     _name = ""
     _animationID = ""
+    _animation = Animation(_animationID)
+
+    def __init__(self, tag=""):
+        self._tag = tag
 
     def get_left(self):
         return self._left
@@ -27,12 +34,21 @@ class ComixElement:
 
     def get_anchorPoint(self):
         return self._anchorPoint
+    
+    def get_tag(self):
+        return self._tag
+    
+    def get_content(self):
+        return self._content
 
     def get_name(self):
         return self._name
 
     def get_animationId(self):
         return self._animationID
+    
+    def print(self):
+        print(self.get_tag())
 
 
 
@@ -55,14 +71,24 @@ class ComixElement:
     def set_anchorPoint(self, anchorpoint):
         self._anchorPoint = anchorpoint
 
+    def set_tag(self, tag):
+        self._tag = tag
+
+    def set_content(self, content):
+        self._content = content
+
     def set_name(self, name):
         self._name = name
 
     def set_animationId(self, animationid):
         self._animationID = animationid
 
+    def append(self, new_content_elem):
+        self._content.append(new_content_elem)
+
 
 class ImgElement(ComixElement):
+    _tag = "img"
     _imagelocation = ""
 
     def getimageloc(self):

@@ -8,7 +8,7 @@ class ComixProject:
     
 
 
-    def __init__(self, width, backgrOutColor, backgrInColor, presp):
+    def __init__(self, width=500, backgrOutColor="000000", backgrInColor="000000", presp=1):
         self._width = width
         self._backgrOutColor = backgrOutColor
         self._backgrInColor = backgrInColor
