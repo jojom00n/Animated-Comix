@@ -1,6 +1,6 @@
-from comics_project_class import ComixProject
-from comics_elements_class import*
-from utilize_class import*
+from ComixProject import ComixProject
+from ComixElement import*
+from ComixUtils import*
 
 import cssutils
 from pprint import pprint
@@ -389,7 +389,7 @@ def get_css(css):
     return dct
 
 
-def pull_css_info(css):
+def fetch_css_info(css):
     pass
 
 
