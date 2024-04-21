@@ -1,19 +1,47 @@
+import cssutils as cssutils
 from bs4 import *
+from yattag import *
 
-class htmlparcing:
-    def parse(self, comixproject):
-        # load the file
-        with open("existing_file.html") as inf:
-            txt = inf.read()
-            soup = bs4.BeautifulSoup(txt)
+from ComixElement import initGroup, initElement, initImage
+from ComixProject import InitComix
 
-        # create new link
-        new_link = soup.new_tag("link", rel="icon", type="image/png", href="img/tor.png")
-        # insert it into the document
-        soup.head.append(new_link)
 
-        # save the file again
-        with open("existing_file.html", "w") as outf:
-            outf.write(str(soup))
+# Получаем данные из css строки
+class htmlparcing():
+    _init_comix = InitComix()
 
+
+    def get_initComix(self):
+        return self._init_comix
+
+    def _initelement(self, index, layers):
+        layer = layers[index]
+        if "group" in layer["class"][1]:
+            group = initGroup()
+            group.set_name(layer["class"][1])
+            if len(layer["class"]) == 3:
+                group.set_AnimationID(layer["class"][2])
+            for groupEl in layer.findAll("div"):
+                index += 1
+                group.get_Elements().append(self._initelement(index, layers))
+            return group
+        elif "img" in layer["class"][1]:
+            img = initImage()
+            img.set_name(layer["class"][1])
+            if len(layer["class"]) == 3:
+                img.set_AnimationID(layer["class"][2])
+            img.set_image(layer.find('img')["src"][0])
+            return img
+
+
+
+    def readHTML(self, text):
+        soup = BeautifulSoup(text, "html.parser")
+        self._init_comix.set_name(soup.find('title').text) #Считываем имя инициализирующемуся комиксу
+        layers = soup.findAll("div", {"class": "parallax-layer"})
+        initelements = []
+        for index in range(0, len(layers), 1):
+            initelements.append(self._initelement(index, layers))
+            print(len(initelements))
+        self._init_comix.set_elements(initelements)
 

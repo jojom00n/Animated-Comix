@@ -80,3 +80,42 @@ class GroupElement(ComixElement):
 
     def __init__(self, elements):
         self._elements = elements
+
+
+class initElement():
+    _name = ""
+    _AnimationID = ""
+
+    def get_name(self):
+        return self._name
+
+    def get_AnimationID(self):
+        return self._AnimationID
+
+    def set_name(self, nam):
+        self._name = nam
+    def set_AnimationID(self, Animation):
+        self._AnimationID = Animation
+
+
+class initImage(initElement):
+    _imageloc = ""
+
+    def get_image(self):
+        return self._imageloc
+
+    def set_image(self, image):
+        self._imageloc = image
+
+
+class initGroup(initElement):
+    _elements = []
+
+    def get_Elements(self):
+        return self._elements
+
+    def set_Elements(self, elements):
+        self._elements = elements
+
+    def add_Element(self, element):
+        self._elements.append(element)

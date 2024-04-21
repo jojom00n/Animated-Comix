@@ -5,14 +5,7 @@ class ComixProject:
     _backgrOutColor = ""
     _backgrInColor = ""
     _perspective = 1
-    
 
-
-    def __init__(self, width, backgrOutColor, backgrInColor, presp):
-        self._width = width
-        self._backgrOutColor = backgrOutColor
-        self._backgrInColor = backgrInColor
-        self._perspective = presp
         
     
     def setParam(self, name, items, width, backgrColOut, backgrColIn, perspect):
@@ -62,3 +55,20 @@ class ComixProject:
     
     def set_perspective(self, pers):
         self._perspective = pers
+
+
+class InitComix():
+    _name = ""
+    _initElements = []
+
+    def get_name(self):
+        return self._name
+
+    def get_initElements(self):
+        return self._initElements
+
+    def set_name(self, name):
+        self._name = name
+
+    def set_elements(self, elements):
+        self._initElements = elements
