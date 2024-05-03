@@ -4,7 +4,7 @@ class ComixProject:
     _width = 0
     _backgrOutColor = ""
     _backgrInColor = ""
-    _perspective = 1
+    _perspective = 0
 
         
     
@@ -58,8 +58,12 @@ class ComixProject:
 
 
 class InitComix():
-    _name = ""
+    _name = "None"
     _initElements = []
+    _backgrOutColor = "Black"
+    _backgrInColor = "Black"
+    _width = 500
+    _perspective = 10
 
     def get_name(self):
         return self._name
@@ -72,3 +76,26 @@ class InitComix():
 
     def set_elements(self, elements):
         self._initElements = elements
+
+    def get_backgrOutColor(self):
+        return self._backgrOutColor
+
+    def get_backgrInColor(self):
+        return self._backgrInColor
+
+    def set_backgrOutColor(self, color): #Получаем из body
+        self._backgrOutColor = color
+
+    def set_backgrInColor(self, color): #Получаем из parallax
+        self._backgrInColor = color
+
+    def get_width(self):
+        return self._width
+
+    def set_width(self, width): #Получаем из container
+        self._width = width
+
+    def get_perspective(self):
+        return self._perspective
+    def set_perspective(self, pers): #Получаем из parallax
+        self._perspective = pers

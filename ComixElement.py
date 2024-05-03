@@ -83,19 +83,62 @@ class GroupElement(ComixElement):
 
 
 class initElement():
+    _left = 0
+    _right = 0
+    _top = 0
+    _bottom = 0
+    _transformation = ""
+    _anchorPoint = ""
     _name = ""
-    _AnimationID = ""
+    _animationID = ""
+
+    def get_left(self):
+        return self._left
+
+    def get_right(self):
+        return self._right
+
+    def get_top(self):
+        return self._top
+
+    def get_bottom(self):
+        return self._bottom
+
+    def get_transforamtion(self):
+        return self._transformation
+
+    def get_anchorPoint(self):
+        return self._anchorPoint
 
     def get_name(self):
         return self._name
 
-    def get_AnimationID(self):
-        return self._AnimationID
+    def get_animationId(self):
+        return self._animationID
 
-    def set_name(self, nam):
-        self._name = nam
-    def set_AnimationID(self, Animation):
-        self._AnimationID = Animation
+    def set_left(self, left):
+        self._left = left
+
+    def set_right(self, right):
+        self._right = right
+
+    def set_top(self, top):
+        self._top = top
+
+    def set_bottom(self, bottom):
+        self._bottom = bottom
+
+    def set_transformation(self, trans):
+        self._transformation = trans
+
+    def set_anchorPoint(self, anchorpoint):
+        self._anchorPoint = anchorpoint
+
+    def set_name(self, name):
+        self._name = name
+
+    def set_animationId(self, animationid):
+        self._animationID = animationid
 
 
 class initImage(initElement):
