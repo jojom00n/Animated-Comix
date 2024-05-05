@@ -32,32 +32,33 @@ f_css = """
     left: 0;
 }
 
-.background {
+.img_background_frame_1 {
     transform: scale(0.36) translateZ(-1.1px);
-    top: 0px;
+    top: 10px;
     left: -230px;
 }
 
-.group_body {
-    top: 0px;
+.group_body_frame_1 {
+    top: 110px;
     transform: scale(0.36);
     left: -230px;
 }
 
-.table {
+.img_body_frame_1 {
     transform: scale(0.36) translateZ(-1px);
-    top: 0px;
+    top: 320px;
     left: -230px;
 }
 
-.hand1 {
-    top: 0px;
+.group_lefthand_frame_1 {
+    transform-origin: 240px 600px;
+    top: 3210px;
     transform: scale(0.36);
     left: -230px;
 }
 
-.hand2 {
-    top: 0px;
+.img_lefthand_one_frame_1 {
+    top: 3240px;
     transform: scale(0.36);
     left: -230px;
 }
@@ -192,7 +193,7 @@ f_html2 = """
                 <div class="parallax-layer img_body_frame_1"> <!--Элемент группы-->
                     <img src="imgs/img_body_frame_1.png" />
                 </div>
-                <div class="parallax-layer img_lefthand_one_frame_1 lefthand_one_frame_1_animation"> <!--Элемент группы (группа в группе тоже может быть)-->
+                <div class="parallax-layer group_lefthand_frame_1 lefthand_one_frame_1_animation"> <!--Элемент группы (группа в группе тоже может быть)-->
                     <div class="parallax-layer img_lefthand_one_frame_1">
                         <img src="imgs/img_lefthand_one_frame_1.png" />
                     </div>
@@ -292,9 +293,9 @@ f_html = """
 """
 
 parcer = htmlparcing()
-parcer.readHTML(f_html2)
-parcer.readCSS(f_css)
+parcer.read_html(f_html2)
+parcer.read_css(f_css)
 project = ComixProject()
-parcer.SetupComProject(project)
-print(parcer.get_initComix().get_backgrOutColor())
+com = parcer.setup_com_project(project)
+print(com)
 

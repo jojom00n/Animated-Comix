@@ -22,7 +22,7 @@ class ComixElement:
     def get_bottom(self):
         return self._bottom
 
-    def get_transforamtion(self):
+    def get_transformation(self):
         return self._transformation
 
     def get_anchorPoint(self):
@@ -49,7 +49,7 @@ class ComixElement:
     def set_bottom(self, bottom):
         self._bottom = bottom
 
-    def set_transforamtion(self, trans):
+    def set_transformation(self, trans):
         self._transformation = trans
 
     def set_anchorPoint(self, anchorpoint):
@@ -68,9 +68,6 @@ class ImgElement(ComixElement):
     def getimageloc(self):
         return self._imagelocation
 
-    def __init__(self, imageloc):
-        self._imagelocation = imageloc
-
 
 class GroupElement(ComixElement):
     _elements = []
@@ -78,15 +75,12 @@ class GroupElement(ComixElement):
     def getimageloc(self):
         return self._elements
 
-    def __init__(self, elements):
-        self._elements = elements
-
 
 class initElement():
-    _left = 0
-    _right = 0
-    _top = 0
-    _bottom = 0
+    _left = "0px"
+    _right = "0px"
+    _top = "0px"
+    _bottom = "0px"
     _transformation = ""
     _anchorPoint = ""
     _name = ""
@@ -104,7 +98,7 @@ class initElement():
     def get_bottom(self):
         return self._bottom
 
-    def get_transforamtion(self):
+    def get_transformation(self):
         return self._transformation
 
     def get_anchorPoint(self):

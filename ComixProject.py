@@ -17,6 +17,8 @@ class ComixProject:
         self._perspective = perspect
 
 
+    def appendElement(self, element):
+        self._items.append(element)
 
     def get_name(self):
         return self._name

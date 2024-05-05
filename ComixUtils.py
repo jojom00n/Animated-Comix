@@ -28,3 +28,12 @@ class ElementTransform:
 
     def get_scale(self):
         return self._scale
+
+    def set_zaxis(self, zax):
+        self._zaxis = zax
+
+    def set_rotation(self, rotation):
+        self._rotation = rotation
+
+    def set_scale(self, scale):
+        self._scale = scale
