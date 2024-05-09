@@ -212,7 +212,7 @@ body {
 
 @keyframes full-body-animation {
     0% {
-        transform: rotate(0deg) translateZ(-1.5px);
+        transform: rotate(2deg) translateZ(-1.5px);
     }
 
     50% {
@@ -276,6 +276,7 @@ body {
 }
 """
 
+
 def keyframe(test_str):
     keyframes = {}
     css_str = test_str.replace('{', '').replace('}', '').replace('\n', '').strip()
@@ -294,15 +295,55 @@ def keyframe(test_str):
         props = key[1].split(": ")
         props[1] = props[1].split()
         props[1][0] = props[1][0].replace('(','').replace(')','')
-        if len(props[1]) == 2:
+        if len(props[1]) == 14:
             props[1][1] = props[1][1].replace('(','').replace(')','')
-        if props[1][0][:3] == 'rot':
+        if props[1][0][:6] == 'rotate':
             props[1][0] = props[1][0][6:-3]
             props[1][0] = int(props[1][0])
-        if len(props[1]) == 2:
-            if props[1][1][:3] == 'sca':
-                props[1][1] = props[1][1][5:]
-                props[1][1] = float(props[1][1])
+        if props[1][1][:7] == 'rotatex':
+            props[1][1] = props[1][1][7:-3]
+            props[1][1] = int(props[1][1])
+        if props[1][2][:7] == 'rotatey':
+            props[1][2] = props[1][2][7:-3]
+            props[1][2] = int(props[1][2])
+        if props[1][3][:7] == 'rotatez':
+            props[1][3] = props[1][3][7:-3]
+            props[1][3] = int(props[1][3])
+        if props[1][4][:5] == 'scale':
+            props[1][4] = props[1][4][5:]
+            props[1][4] = int(props[1][4])
+        if props[1][5][:6] == 'scalex':
+            props[1][5] = props[1][5][6:]
+            props[1][5] = int(props[1][5])
+        if props[1][6][:6] == 'scaley':
+            props[1][6] = props[1][6][6:]
+            props[1][6] = int(props[1][6])
+        if props[1][7][:6] == 'scalez':
+            props[1][7] = props[1][7][6:]
+            props[1][7] = int(props[1][7])
+        if props[1][8][:5] == 'skewx':
+            props[1][8] = props[1][8][5:-3]
+            props[1][8] = int(props[1][8])
+        if props[1][9][:5] == 'skewy':
+            props[1][9] = props[1][9][5:-3]
+            props[1][9] = int(props[1][9])
+        if props[1][10][:9] == 'translate':
+            props[1][10] = props[1][10][9:]
+            props[1][10] = props[1][10].split(',')
+            props[1][10][0] = props[1][10][0][:-2]
+            props[1][10][0] = int(props[1][10][0])
+            if len(props[1][10][0]) == 2:
+                props[1][10][1] = props[1][10][1][:-2]
+                props[1][10][1] = int(props[1][10][1])
+        if props[1][11][:10] == 'translatex':
+            props[1][11] = props[1][9][11:-2]
+            props[1][11] = int(props[1][11])
+        if props[1][12][:10] == 'translatey':
+            props[1][12] = props[1][9][12:-2]
+            props[1][12] = int(props[1][12])
+        if props[1][13][:10] == 'translatez':
+            props[1][13] = props[1][9][13:-2]
+            props[1][13] = int(props[1][13])
         dict_values[props[0]] = props[1]
         key[1] = dict_values
         list_key.append(key[0])
