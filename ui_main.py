@@ -16,7 +16,8 @@ from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtGui import QDragEnterEvent, QDropEvent, QDrag
 from PySide6.QtWidgets import QMainWindow, QSlider
 from PySide6.QtWidgets import QScrollArea
-
+from PySide6.QtWidgets import QGraphicsColorizeEffect, QGraphicsOpacityEffect, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QGraphicsView, QGraphicsScene
 
 
 
@@ -28,12 +29,30 @@ class ImageLabel(QLabel):
     def __init__(self):
         super().__init__()
         self.old_pos = None
+        self.active = False
+        self.setStyleSheet("border: 2px solid red;")
+        self.current_pos = None
+        self.original_pixmap = None  # Добавляем атрибут для хранения исходного изображения
+        self.current_pixmap = None
 
+        self.for_changed_image_size = None
+        self.for_rotated_images = None
+        self.for_changed_image_opacity = None
+
+
+        self.current_image_no_size = None
+
+
+        self.current_image_no_rotate = None
+
+
+        self.current_image_no_opacity = None
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.old_pos = event.pos()
+        if isinstance(event, QtGui.QMouseEvent) and event.button() == Qt.LeftButton:
 
+            self.old_pos = event.pos()
+            self.mousePressEvent2(event)
 
 
     def mouseMoveEvent(self, event):
@@ -46,9 +65,32 @@ class ImageLabel(QLabel):
 
     def mouseReleaseEvent(self, event):
         print('x: {0}, y: {1}'.format(self.pos().x(), self.pos().y()))
+        self.current_pos = self.pos()
 
     def setPixmap(self, image):
         super().setPixmap(image)
+        self.original_pixmap = QPixmap(image)  # Сохраняем исходное изображение
+
+    def setPixmap2(self, image):
+        super().setPixmap(image)
+
+    def setPixmap_size(self, image):
+        super().setPixmap(image)
+        self.current_image_no_rotate = QPixmap(image)  # Сохраняем исходное изображение
+        self.current_image_no_opacity = QPixmap(image)
+
+
+
+    def setPixmap_rotate(self, image):
+        super().setPixmap(image)
+        self.current_image_no_size = QPixmap(image)
+        self.current_image_no_opacity = QPixmap(image)
+
+    def setPixmap_opacity(self, image):
+        super().setPixmap(image)
+        self.current_image_no_size = QPixmap(image)
+        self.current_image_no_rotate = QPixmap(image)
+
 
     def event(self, event):
         if event.type() == QtCore.QEvent.MouseMove and event.buttons() == Qt.NoButton:
@@ -56,29 +98,44 @@ class ImageLabel(QLabel):
             return True
         return super().event(event)
 
-# Класс для отслеживание курсора мыши
-class MouseTracker(QtCore.QObject):
-    positionChanged = QtCore.Signal(QtCore.QPoint)
+    '''def setPixmap(self, image):
+            super().setPixmap(image)'''
 
-    def __init__(self, widget, label):
-        super().__init__(widget)
-        self._widget = widget
-        self._label = label  # Сохраняем ссылку на метку
-        self.widget.setMouseTracking(True)
-        self.widget.installEventFilter(self)
+    def event(self, event):
+        if event.type() == QtCore.QEvent.MouseMove and event.buttons() == Qt.NoButton:
+            event.ignore()  # Пропустить событие мыши, если нет нажатых кнопок
+            return True
+        return super().event(event)
 
-    @property
-    def widget(self):
-        return self._widget
+    def mousePressEvent2(self, event):
+        print("Mouse press event 2")
+        if isinstance(event, QtGui.QMouseEvent) and event.button() == Qt.LeftButton and event.modifiers() & Qt.ShiftModifier:
+            for image_label_item in Ui_MainWindow.image_labels:
+                if image_label_item == self:
+                    image_label_item.active = True
+                    break
+        else:
+            for image_label_item in Ui_MainWindow.image_labels:
+                if image_label_item == self:
+                    image_label_item.active = True
+                else:
+                    image_label_item.active = False
 
-    def eventFilter(self, o, e):
-        if o is self.widget and e.type() == QtCore.QEvent.MouseMove:
-            mouse_event = QtGui.QMouseEvent(e)
-            pos = mouse_event.pos()
-            # Обновляем текст метки с текущими координатами курсора
-            self._label.setText("X: %d, Y: %d" % (pos.x(), pos.y()))
-            return True  # Возвращаем True, чтобы предотвратить передачу события дальше
-        return super().eventFilter(o, e)
+        # Вызываем метод, который обновит отображение активных фотографий
+        self.update_active_photos()
+
+    def update_active_photos(self):
+        for image_label_item in Ui_MainWindow.image_labels:
+            if image_label_item.active:
+                # Если фотография активна, применяем какое-то изменение к ней, например, изменяем ее рамку
+                image_label_item.setStyleSheet("border: 2px solid red;")
+                self.move(self.current_pos)
+                self.current_pos = self.pos()
+            else:
+                # Если фотография неактивна, возвращаем ей обычный вид
+                image_label_item.setStyleSheet("border: 0px solid rgb(0, 170, 255);")
+                self.move(self.current_pos)
+                self.current_pos = self.pos()
 
 # Окно настройек проекта
 class NewWindow(QMainWindow):
@@ -94,6 +151,10 @@ class NewWindow(QMainWindow):
 
 
 class Ui_MainWindow(object):
+    image_labels = []
+    previous_slider_value = 0  # Сохранение предыдущего значения ползунка
+    previous_rotation_angle = 0  # Сохранение предыдущего угла поворота
+    previous_opacity_value = 0  # Сохранение предыдущего значения прозрачности
 
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
@@ -275,19 +336,23 @@ class Ui_MainWindow(object):
         # Включаем прием перетаскиваемых файлов
         self.main_work_space.setAcceptDrops(True)
 
-        self.main_work_space.setFixedSize(QSize(300, 1000))
+        self.main_work_space.setFixedSize(QSize(450, 1000))
 
-        self.photoViewer = ImageLabel()
-        self.photoViewer.setStyleSheet(u"border: 0px solid rgb(0, 170, 255);")
-        self.main_work_space.layout().addWidget(self.photoViewer)
 
         # Создаем виджет с прокруткой
         self.scroll_area = QScrollArea(self.centralwidget)
         self.scroll_area.setWidgetResizable(True)  # Разрешаем изменение размеров содержимого
 
+        # Создаем main_work_space и устанавливаем его в горизонтальный виджет
+        self.scroll_content_widget = QWidget()
+        self.scroll_content_layout = QHBoxLayout(self.scroll_content_widget)
+        self.scroll_content_layout.addWidget(self.main_work_space)
+        self.scroll_content_layout.addStretch(1)  # Горизонтальный спейсер для центрирования
 
-        # Создаем main_work_space и устанавливаем его в виджет с прокруткой
-        self.scroll_area.setWidget(self.main_work_space)
+        self.scroll_area.setWidget(self.scroll_content_widget)
+
+        # Устанавливаем alignment горизонтального лэйаута в центр
+        self.scroll_content_layout.setAlignment(QtCore.Qt.AlignCenter)
 
 
 
@@ -344,6 +409,54 @@ class Ui_MainWindow(object):
 
 
         self.verticalLayout_2.addLayout(self.properties)
+
+        self.label = QLabel(self.widget)
+        self.label.setObjectName(u"label")
+
+        self.verticalLayout_2.addWidget(self.label)
+
+        self.horizontalSlider = QtWidgets.QSlider(
+            QtCore.Qt.Horizontal,
+            minimum=1,
+            maximum=300,
+            value=100,
+            valueChanged=self.change_image_size,
+        )
+
+
+
+        self.verticalLayout_2.addWidget(self.horizontalSlider)
+
+        self.label_2 = QLabel(self.widget)
+        self.label_2.setObjectName(u"label_2")
+
+        self.verticalLayout_2.addWidget(self.label_2)
+
+        self.horizontalSlider_2 = QtWidgets.QSlider(
+            QtCore.Qt.Horizontal,
+            minimum=0,
+            maximum=360,
+            value=0,
+            valueChanged=self.rotate_images,
+        )
+
+        self.verticalLayout_2.addWidget(self.horizontalSlider_2)
+
+        self.label_3 = QLabel(self.widget)
+        self.label_3.setObjectName(u"label_3")
+
+        self.verticalLayout_2.addWidget(self.label_3)
+
+        self.horizontalSlider_3 = QtWidgets.QSlider(
+            QtCore.Qt.Horizontal,
+            minimum=0,
+            maximum=100,
+            value=100,
+            valueChanged=self.change_image_opacity,
+        )
+
+        self.verticalLayout_2.addWidget(self.horizontalSlider_3)
+
 
         self.btn_object_transform = QPushButton(self.widget)
         self.btn_object_transform.setObjectName(u"btn_object_transform")
@@ -438,80 +551,183 @@ class Ui_MainWindow(object):
         new_image_label = ImageLabel()
         new_image_label.setStyleSheet(u"border: 0px solid rgb(0, 170, 255);")
         pixmap = QPixmap(file_path)
+
+        # Масштабируем изображение до размера self.main_work_space с сохранением пропорций
         scaled_pixmap = pixmap.scaled(self.main_work_space.size(), Qt.KeepAspectRatio)
+
+        # Устанавливаем размеры виджета ImageLabel такими же, как и у изображения
+        new_image_label.setFixedSize(scaled_pixmap.size())
+
+        # Устанавливаем изображение в ImageLabel
         new_image_label.setPixmap(scaled_pixmap)
-        # Настройте новый ImageLabel по вашему усмотрению
+
         # Затем добавьте его в ваш контейнер main_work_space
         self.main_work_space.layout().addWidget(new_image_label)
         # Добавьте новый ImageLabel в список
         self.image_labels.append(new_image_label)
 
         # Создаем экземпляр класса MouseTracker и передаем новый ImageLabel и метку для отображения координат
-        tracker = MouseTracker(new_image_label, self.label_position)
+        # tracker = MouseTracker(new_image_label, self.label_position)
 
         # Добавляем новый экземпляр MouseTracker в список
-        self.mouse_trackers.append(tracker)
+        # self.mouse_trackers.append(tracker)
 
+    def change_image_size(self, value):
+        if value != self.previous_slider_value:
+            scale_factor = value / 100.0
+            for image_label_item in self.image_labels:
+                if image_label_item.active:
+                    original_pixmap = image_label_item.original_pixmap  # Получаем исходное изображение
+                    pixmap = original_pixmap.scaled(original_pixmap.width() * scale_factor,
+                                                    original_pixmap.height() * scale_factor,
+                                                    Qt.KeepAspectRatio)
+                    if image_label_item.for_changed_image_opacity is not None:  # Используем измененное изображение с прозрачностью, если оно есть
+                        pixmap = image_label_item.for_changed_image_opacity.scaled(pixmap.width(), pixmap.height())
+                    image_label_item.for_changed_image_size = pixmap
+                    image_label_item.setPixmap_size(pixmap)
 
+                    # Обновляем размер рамки
+                    image_label_item.setStyleSheet("border: 2px solid red;")
+                    image_label_item.setFixedSize(pixmap.width(), pixmap.height())
+
+                    # Обновляем положение границы
+                    container = image_label_item.parentWidget()
+                    container.setGeometry(container.x(), container.y(), pixmap.width(), pixmap.height())
+
+            self.previous_slider_value = value
+
+    def rotate_images(self, angle):
+        for image_label_item in self.image_labels:
+            if image_label_item.active:
+                if image_label_item.for_changed_image_size is not None:  # Используем измененное изображение, если оно есть
+                    pixmap = image_label_item.for_changed_image_size
+                else:
+                    pixmap = image_label_item.original_pixmap
+                transform = QTransform()
+                transform.rotate(angle)
+                pixmap = pixmap.transformed(transform)
+                image_label_item.for_rotated_images = pixmap
+                image_label_item.setPixmap_rotate(pixmap)
+
+                # Обновляем размер рамки
+                image_label_item.setStyleSheet("border: 2px solid red;")
+                image_label_item.setFixedSize(pixmap.width(), pixmap.height())
+
+                # Поворачиваем и обновляем положение рамки
+                container = image_label_item.parentWidget()
+                container.setGeometry(container.x(), container.y(), pixmap.width(), pixmap.height())
+                container.setStyleSheet("transform: rotate({}deg);".format(angle))
+
+    @QtCore.Slot(int)
+    def change_image_opacity(self, value):
+        for image_label_item in self.image_labels:
+            if image_label_item.active:
+                if image_label_item.for_changed_image_size is not None:  # Используем измененное изображение, если оно есть
+                    pixmap = image_label_item.for_changed_image_size
+                else:
+                    pixmap = image_label_item.original_pixmap
+                new_pixmap = QtGui.QPixmap(pixmap.size())
+                new_pixmap.fill(QtCore.Qt.transparent)
+                painter = QtGui.QPainter(new_pixmap)
+                painter.setOpacity(value * 0.01)
+                painter.drawPixmap(QtCore.QPoint(), pixmap)
+                painter.end()
+                image_label_item.for_changed_image_opacity = new_pixmap
+                image_label_item.setPixmap_opacity(new_pixmap)
 
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
-#if QT_CONFIG(tooltip)
+        # if QT_CONFIG(tooltip)
         self.groupBox.setToolTip("")
-#endif // QT_CONFIG(tooltip)
-        self.btn_project.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0435\u043a\u0442", None))
+        # endif // QT_CONFIG(tooltip)
+        self.btn_project.setText(
+            QCoreApplication.translate("MainWindow", u"\u041f\u0440\u043e\u0435\u043a\u0442", None))
         self.btn_file.setText(QCoreApplication.translate("MainWindow", u"\u0424\u0430\u0439\u043b", None))
-        self.btn_edit.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u0430\u0432\u0438\u0442\u044c", None))
+        self.btn_edit.setText(
+            QCoreApplication.translate("MainWindow", u"\u041f\u0440\u0430\u0432\u0438\u0442\u044c", None))
         self.btn_view.setText(QCoreApplication.translate("MainWindow", u"\u0412\u0438\u0434", None))
-        self.btn_panel_edit.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0430\u043d\u0435\u043b\u044c \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f", None))
-        self.btn_animation.setText(QCoreApplication.translate("MainWindow", u"\u0410\u043d\u0438\u043c\u0430\u0446\u0438\u044f", None))
-        self.object_properties.setText(QCoreApplication.translate("MainWindow", u"\u0421\u0432\u043e\u0439\u0441\u0442\u0432\u0430 \u043e\u0431\u044a\u0435\u043a\u0442\u0430", None))
+        self.btn_panel_edit.setText(QCoreApplication.translate("MainWindow",
+                                                               u"\u041f\u0430\u043d\u0435\u043b\u044c \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f",
+                                                               None))
+        self.btn_animation.setText(
+            QCoreApplication.translate("MainWindow", u"\u0410\u043d\u0438\u043c\u0430\u0446\u0438\u044f", None))
+        self.object_properties.setText(QCoreApplication.translate("MainWindow",
+                                                                  u"\u0421\u0432\u043e\u0439\u0441\u0442\u0432\u0430 \u043e\u0431\u044a\u0435\u043a\u0442\u0430",
+                                                                  None))
         self.pushButton_16.setText(QCoreApplication.translate("MainWindow", u"1000 px", None))
         self.pushButton_15.setText(QCoreApplication.translate("MainWindow", u"100 px", None))
         self.pushButton_13.setText(QCoreApplication.translate("MainWindow", u"300 px", None))
         self.pushButton_14.setText(QCoreApplication.translate("MainWindow", u"100 px", None))
-        self.btn_object_transform.setText(QCoreApplication.translate("MainWindow", u"\u0422\u0440\u0430\u043d\u0441\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f \u043e\u0431\u044a\u0435\u043a\u0442\u0430", None))
-        self.btn_fast_animation.setText(QCoreApplication.translate("MainWindow", u"\u0411\u044b\u0441\u0442\u0440\u0430\u044f \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u044f", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"\u0420\u0430\u0437\u043c\u0435\u0440", None))
+        self.label_2.setText(
+            QCoreApplication.translate("MainWindow", u"\u041f\u043e\u0432\u043e\u0440\u043e\u0442", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow",
+                                                        u"\u041f\u0440\u043e\u0437\u0440\u0430\u0447\u043d\u043e\u0441\u0442\u044c",
+                                                        None))
+        self.btn_object_transform.setText(QCoreApplication.translate("MainWindow",
+                                                                     u"\u0422\u0440\u0430\u043d\u0441\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f \u043e\u0431\u044a\u0435\u043a\u0442\u0430",
+                                                                     None))
+        self.btn_fast_animation.setText(QCoreApplication.translate("MainWindow",
+                                                                   u"\u0411\u044b\u0441\u0442\u0440\u0430\u044f \u0430\u043d\u0438\u043c\u0430\u0446\u0438\u044f",
+                                                                   None))
 
         __sortingEnabled = self.layers_tree.isSortingEnabled()
         self.layers_tree.setSortingEnabled(False)
         ___qtreewidgetitem = self.layers_tree.topLevelItem(0)
-        ___qtreewidgetitem.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem.setText(0,
+                                   QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         ___qtreewidgetitem1 = ___qtreewidgetitem.child(0)
-        ___qtreewidgetitem1.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem1.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         ___qtreewidgetitem2 = ___qtreewidgetitem.child(1)
-        ___qtreewidgetitem2.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
+        ___qtreewidgetitem2.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
         ___qtreewidgetitem3 = self.layers_tree.topLevelItem(1)
-        ___qtreewidgetitem3.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
+        ___qtreewidgetitem3.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
         ___qtreewidgetitem4 = ___qtreewidgetitem3.child(0)
-        ___qtreewidgetitem4.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem4.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         ___qtreewidgetitem5 = self.layers_tree.topLevelItem(2)
-        ___qtreewidgetitem5.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 3", None));
+        ___qtreewidgetitem5.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 3", None));
         ___qtreewidgetitem6 = ___qtreewidgetitem5.child(0)
-        ___qtreewidgetitem6.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem6.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         ___qtreewidgetitem7 = ___qtreewidgetitem5.child(1)
-        ___qtreewidgetitem7.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
+        ___qtreewidgetitem7.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
         ___qtreewidgetitem8 = ___qtreewidgetitem5.child(2)
-        ___qtreewidgetitem8.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 3", None));
+        ___qtreewidgetitem8.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 3", None));
         ___qtreewidgetitem9 = ___qtreewidgetitem5.child(3)
-        ___qtreewidgetitem9.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 4", None));
+        ___qtreewidgetitem9.setText(0,
+                                    QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 4", None));
         ___qtreewidgetitem10 = ___qtreewidgetitem5.child(4)
-        ___qtreewidgetitem10.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 5", None));
+        ___qtreewidgetitem10.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 5", None));
         ___qtreewidgetitem11 = ___qtreewidgetitem5.child(5)
-        ___qtreewidgetitem11.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 6", None));
+        ___qtreewidgetitem11.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 6", None));
         ___qtreewidgetitem12 = self.layers_tree.topLevelItem(3)
-        ___qtreewidgetitem12.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 4", None));
+        ___qtreewidgetitem12.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 4", None));
         ___qtreewidgetitem13 = ___qtreewidgetitem12.child(0)
-        ___qtreewidgetitem13.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem13.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         ___qtreewidgetitem14 = ___qtreewidgetitem12.child(1)
-        ___qtreewidgetitem14.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
+        ___qtreewidgetitem14.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 2", None));
         ___qtreewidgetitem15 = self.layers_tree.topLevelItem(4)
-        ___qtreewidgetitem15.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 5", None));
+        ___qtreewidgetitem15.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 5", None));
         ___qtreewidgetitem16 = self.layers_tree.topLevelItem(5)
-        ___qtreewidgetitem16.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 6", None));
+        ___qtreewidgetitem16.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 6", None));
         ___qtreewidgetitem17 = ___qtreewidgetitem16.child(0)
-        ___qtreewidgetitem17.setText(0, QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
+        ___qtreewidgetitem17.setText(0,
+                                     QCoreApplication.translate("MainWindow", u"\u0421\u043b\u043e\u0439 1", None));
         self.layers_tree.setSortingEnabled(__sortingEnabled)
 
     # retranslateUi
@@ -570,7 +786,7 @@ class project_edit_window(QMainWindow):
         self.slider_width.setMinimum(100)
         self.slider_width.setMaximum(1000)
         self.slider_width.setSingleStep(10)
-        self.slider_width.setSliderPosition(300)
+        self.slider_width.setSliderPosition(450)
         self.slider_width.setOrientation(Qt.Horizontal)
 
         self.gridLayout.addWidget(self.slider_width, 1, 1, 1, 1)
@@ -653,7 +869,7 @@ class project_edit_window(QMainWindow):
         self.height.setText(QCoreApplication.translate("MainWindow", u"\u0412\u044b\u0441\u043e\u0442\u0430", None))
         self.line_edit_height.setText(QCoreApplication.translate("MainWindow", u"1000", None))
         self.width.setText(QCoreApplication.translate("MainWindow", u"\u0428\u0438\u0440\u0438\u043d\u0430", None))
-        self.line_edit_width.setText(QCoreApplication.translate("MainWindow", u"300", None))
+        self.line_edit_width.setText(QCoreApplication.translate("MainWindow", u"450", None))
         self.btn_confirm_size_project.setText(QCoreApplication.translate("MainWindow", u"\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c", None))
         self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"\u041e\u0442\u043c\u0435\u043d\u0430", None))
     # retranslateUi
