@@ -279,7 +279,7 @@ body {
 
 def keyframe(test_str):
     keyframes = {}
-    css_str = test_str.replace('{', '').replace('}', '').replace('\n', '').strip()
+    css_str = test_str.replace('{', '').replace('}', '').replace('\n', '').replace('    ', '').replace('        ', '').strip()
     animations = css_str.split(';')
     animations[0] = animations[0].split(" ",1)
     name = animations[0][0]
@@ -294,9 +294,8 @@ def keyframe(test_str):
             key[0]=int(key[0])
         props = key[1].split(": ")
         props[1] = props[1].split()
-        props[1][0] = props[1][0].replace('(','').replace(')','')
-        if len(props[1]) == 14:
-            props[1][1] = props[1][1].replace('(','').replace(')','')
+        for i in range(len(props[1])):
+            props[1][i] = props[1][i].replace('(','').replace(')','')
         if props[1][0][:6] == 'rotate':
             props[1][0] = props[1][0][6:-3]
             props[1][0] = int(props[1][0])
